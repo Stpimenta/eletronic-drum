@@ -1,0 +1,2 @@
+source /home/stpimenta/Desktop/Projects/eletronic-drum/esp32/build/gdbinit/symbols
+source /home/stpimenta/Desktop/Projects/eletronic-drum/esp32/build/gdbinit/connect
