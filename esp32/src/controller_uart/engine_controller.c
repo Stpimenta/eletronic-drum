@@ -17,7 +17,6 @@ void engine_controller_init(engine_t *engines, int count)
 
 bool engine_controller_get_all(char *out, size_t max_len)
 {
-    printf("get all \n");
     if (!out || max_len == 0 || !s_engines)
         return false;
 
@@ -63,7 +62,6 @@ bool engine_controller_get_all(char *out, size_t max_len)
         return false;
 
 
-    printf("ENGINE RESPONSE:\n%s", out);
-
+    printf("[ENGINE CONTROLLER]ENGINE RESPONSE:\n%s", out);
     return true;
 }

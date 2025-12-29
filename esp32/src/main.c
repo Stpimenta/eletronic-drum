@@ -63,7 +63,6 @@ void setup_adc()
 #define NUM_PADS 1
 pad_t *pads[NUM_PADS];
 
-#define NUM_ENGINES = 1;
 
 void app_main(void)
 {

@@ -8,103 +8,172 @@ const char PAGE_INDEX[] PROGMEM = R"rawliteral(
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Drum Config</title>
+
 <style>
-body{margin:0;font-family:Arial;background:#111;color:#eee}
-header{padding:12px;text-align:center;background:#1c1c1c;font-weight:bold}
-.container{padding:12px;max-width:480px;margin:auto}
-
-.pad{
-  background:#1e1e1e;
-  border-radius:8px;
-  padding:12px;
-  margin-bottom:12px;
-  position:relative;
-}
-.pad h3{margin:0 0 8px 0;font-size:16px}
-label{font-size:13px;display:block;margin-top:10px}
-.row{display:flex;align-items:center;gap:6px}
-
-button{
-  background:#333;
-  color:#fff;
-  border:none;
-  border-radius:4px;
-}
-.btn-step{
-  width:32px;
-  height:32px;
-  font-size:18px;
-}
-.btn-step:active{background:#555}
-
-.btn-save{
-  position:absolute;
-  top:10px;
-  right:10px;
-  padding:4px 8px;
-  font-size:11px;
-  background:#2e7d32;
-}
-.btn-save:active{background:#388e3c}
-
-input[type=number]{
-  width:70px;
-  height:32px;
-  text-align:center;
-  background:#111;
-  color:#fff;
-  border:1px solid #444;
-  border-radius:4px;
+:root {
+  --bg: #111;
+  --card: #1e1e1e;
+  --line: #2a2a2a;
+  --text: #eee;
+  --muted: #999;
+  --accent: #4caf50;
 }
 
-footer{text-align:center;font-size:11px;color:#777;margin-top:16px}
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: monospace;
+  background: var(--bg);
+  color: var(--text);
+}
+
+header {
+  padding: 12px;
+  text-align: center;
+  background: #1c1c1c;
+  font-weight: bold;
+  border-bottom: 1px solid var(--line);
+}
+
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px;
+  max-width: 900px;
+  margin: auto;
+}
+
+/* PAD */
+.pad {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  position: relative;
+  width: 100%;
+}
+
+@media (min-width: 700px) {
+  .pad {
+    width: calc(50% - 6px);
+  }
+}
+
+.pad h3 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: var(--accent);
+}
+
+.pad h3 span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* CAMPOS */
+label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+input[type=number] {
+  width: 70px;
+  height: 30px;
+  background: #000;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  text-align: center;
+  font-family: monospace;
+}
+
+button {
+  background: #222;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-family: monospace;
+  cursor: pointer;
+}
+
+button:active {
+  background: #333;
+}
+
+.btn-step {
+  width: 30px;
+  height: 30px;
+  font-size: 16px;
+}
+
+.btn-save {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 11px;
+  padding: 4px 8px;
+  background: #1b5e20;
+  border-color: #2e7d32;
+}
+
+footer {
+  text-align: center;
+  font-size: 10px;
+  color: var(--muted);
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
 </style>
 </head>
 
 <body>
-<header>DRUM CONFIG</header>
+
+<header>ESP32 DRUM · CONFIG</header>
 
 <div class="container" id="pads"></div>
 
-<footer>ESP01 Drum Interface</footer>
+<footer>UART Interface · ESP01</footer>
 
 <script>
 function step(id, delta){
-  var el = document.getElementById(id);
+  const el = document.getElementById(id);
   if(!el) return;
-  var v = parseInt(el.value) || 0;
-  el.value = v + delta;
-  el.blur();
+  el.value = (parseInt(el.value) || 0) + delta;
 }
 
 function sendPad(id){
-  const commands = [];
-  const t  = document.getElementById('p'+id+'t').value;
-  const g  = document.getElementById('p'+id+'g').value;
-  const n  = document.getElementById('p'+id+'n').value;
-  const ph = document.getElementById('p'+id+'ph').value;
-  const rt = document.getElementById('p'+id+'rt').value;
+  const cmds = [
+    `SET PAD ${id} THRESHOLD ${document.getElementById('p'+id+'t').value}`,
+    `SET PAD ${id} SENSITIVITY ${document.getElementById('p'+id+'g').value}`,
+    `SET PAD ${id} NOTE ${document.getElementById('p'+id+'n').value}`,
+    `SET PAD ${id} PEAK_HOLD ${document.getElementById('p'+id+'ph').value}`,
+    `SET PAD ${id} RETRIGGER ${document.getElementById('p'+id+'rt').value}`,
+  ];
 
-  commands.push(`SET PAD ${id} THRESHOLD ${t}`);
-  commands.push(`SET PAD ${id} SENSITIVITY ${g}`);
-  commands.push(`SET PAD ${id} NOTE ${n}`);
-  commands.push(`SET PAD ${id} PEAK_HOLD ${ph}`);
-  commands.push(`SET PAD ${id} RETRIGGER ${rt}`);
-
-  // envia cada comando separadamente
-  commands.forEach(cmd => {
+  cmds.forEach(cmd => {
     fetch("/cmd", {
       method: "POST",
       headers: { "Content-Type": "text/plain" },
       body: cmd + "\\n"
-    }).catch(e => console.log("Erro ao enviar comando:", e));
+    }).catch(() => {});
   });
 }
 
 function renderPad(pad){
   return `
   <div class="pad">
-    <h3>Pad ${pad.id} - ${pad.name}</h3>
+    <h3>Pad ${pad.id} <span>${pad.name}</span></h3>
 
     <button class="btn-save" onclick="sendPad(${pad.id})">Salvar</button>
 
@@ -116,7 +185,7 @@ function renderPad(pad){
       </div>
     </label>
 
-    <label>Gain (x100)
+    <label>Sensitivity
       <div class="row">
         <button class="btn-step" onclick="step('p${pad.id}g', -1)">−</button>
         <input type="number" id="p${pad.id}g" value="${pad.sensitivity}">
@@ -132,7 +201,7 @@ function renderPad(pad){
       </div>
     </label>
 
-    <label>Peak Hold
+    <label>Peak Hold (µs)
       <div class="row">
         <button class="btn-step" onclick="step('p${pad.id}ph', -10)">−</button>
         <input type="number" id="p${pad.id}ph" value="${pad.peak_hold}">
@@ -140,7 +209,7 @@ function renderPad(pad){
       </div>
     </label>
 
-    <label>Retrigger
+    <label>Retrigger (µs)
       <div class="row">
         <button class="btn-step" onclick="step('p${pad.id}rt', -100)">−</button>
         <input type="number" id="p${pad.id}rt" value="${pad.retrigger}">
@@ -155,15 +224,10 @@ function loadState(){
     .then(r => r.json())
     .then(data => {
       if(!data || !data.pads) return;
-
-      var container = document.getElementById("pads");
-      container.innerHTML = "";
-
-      data.pads.forEach(pad => {
-        container.innerHTML += renderPad(pad);
-      });
-    })
-    .catch(() => console.log("Falha ao carregar estado"));
+      const c = document.getElementById("pads");
+      c.innerHTML = "";
+      data.pads.forEach(p => c.innerHTML += renderPad(p));
+    });
 }
 
 window.onload = loadState;

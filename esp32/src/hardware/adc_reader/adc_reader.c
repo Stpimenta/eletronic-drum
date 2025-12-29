@@ -19,7 +19,7 @@ void read_adc(adc_reader_t *reader)
         }
         else
         {
-            reader->value = -1; // fallback
+            reader->value = -1; 
         }
     }
 }

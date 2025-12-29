@@ -6,10 +6,12 @@
 #include <string.h>
 #include "controller_uart/pad_controller.h"
 #include "controller_uart/engine_controller.h"
+
 #define UART_BUF_SIZE 3096
 static uart_port_t s_uart_num;
 static uint8_t uart_rx_buf[UART_BUF_SIZE];
 static char engine_resp_buf[2048];
+static TaskHandle_t s_uart_task_handle = NULL;
 
 static void uart_task(void *arg)
 {
@@ -63,29 +65,7 @@ static void uart_task(void *arg)
     }
 }
 
-void start_process_uart(uart_port_t uart_num, int rx_pin, int tx_pin)
-{
-    s_uart_num = uart_num;
-    uart_config_t cfg = {
-        .baud_rate = 115200,
-        .data_bits = UART_DATA_8_BITS,
-        .parity = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE};
 
-    uart_driver_install(uart_num, UART_BUF_SIZE * 2, 0, 0, NULL, 0);
-    uart_param_config(uart_num, &cfg);
-    uart_set_pin(uart_num, tx_pin, rx_pin,
-                 UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-
-    xTaskCreate(
-        uart_task,
-        "uart_process",
-        3096,
-        NULL,
-        10,
-        NULL);
-}
 
 bool protocol_dispatch(const char *cmd)
 {
@@ -137,4 +117,48 @@ bool protocol_dispatch_set(const char *cmd)
     }
 
     return false;
+}
+
+
+void start_process_uart(uart_port_t uart_num, int rx_pin, int tx_pin, int cpu_core)
+{
+    s_uart_num = uart_num;
+    uart_config_t cfg = {
+        .baud_rate = 115200,
+        .data_bits = UART_DATA_8_BITS,
+        .parity = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE};
+
+    uart_driver_install(uart_num, UART_BUF_SIZE * 2, 0, 0, NULL, 0);
+    uart_param_config(uart_num, &cfg);
+    uart_set_pin(uart_num, tx_pin, rx_pin,
+                 UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+
+     xTaskCreatePinnedToCore(
+        uart_task,        // função da task
+        "uart_process",   // nome
+        4096,             // stack size
+        NULL,             // parâmetro
+        5,               // prioridade
+        &s_uart_task_handle, // handle
+        cpu_core                // core (0 ou 1)
+    );
+}
+
+void stop_process_uart(void)
+{
+    // 1. Deleta a task
+    if (s_uart_task_handle != NULL)
+    {
+        vTaskDelete(s_uart_task_handle);
+        s_uart_task_handle = NULL;
+    }
+    // 2. Desinstala o driver UART
+    uart_driver_delete(s_uart_num);
+
+    // 3. Limpa estado global
+    s_uart_num = UART_NUM_MAX; 
+    memset(uart_rx_buf, 0, sizeof(uart_rx_buf));
+    memset(engine_resp_buf, 0, sizeof(engine_resp_buf));
 }

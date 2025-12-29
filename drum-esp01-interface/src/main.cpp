@@ -19,6 +19,11 @@ bool engineReady = false;
 unsigned long engineRequestAt = 0;
 const unsigned long ENGINE_TIMEOUT_MS = 500;
 
+// estado global
+String engineJson;
+String engineError;
+bool getEngineState();
+
 // ---------------- WEB ----------------
 
 void handleRoot()
@@ -31,13 +36,13 @@ void handleCmd()
   String body = server.arg("plain");
   Serial.println(body);
   server.send(200, "text/plain", "OK");
+  getEngineState();
 }
 
 // ---------------- ENGINE REQUEST ----------------
 
 void requestEngineState()
 {
-  // reset estado
   engineDump = "";
   uartRxBuffer = "";
   receivingEngine = false;
@@ -104,9 +109,9 @@ String buildEngineJson(const String &dump)
   return json;
 }
 
-// ---------------- /state ----------------
+// ---------------- ENGINE STATE CORE ----------------
 
-void handleState()
+bool getEngineState()
 {
   requestEngineState();
 
@@ -114,8 +119,9 @@ void handleState()
   {
     if (millis() - engineRequestAt > ENGINE_TIMEOUT_MS)
     {
-      server.send(504, "text/plain", "ENGINE TIMEOUT");
-      return;
+      engineError = "ENGINE TIMEOUT";
+      engineJson = "";
+      return false;
     }
 
     while (Serial.available())
@@ -150,8 +156,22 @@ void handleState()
     yield();
   }
 
-  String json = buildEngineJson(engineDump);
-  server.send(200, "application/json", json);
+  engineJson = buildEngineJson(engineDump);
+  engineError = "";
+  return true;
+}
+
+// ---------------- /state (HTTP) ----------------
+
+void handleState()
+{
+  if (!getEngineState())
+  {
+    server.send(504, "text/plain", engineError);
+    return;
+  }
+
+  server.send(200, "application/json", engineJson);
 }
 
 // ---------------- SETUP / LOOP ----------------
@@ -173,6 +193,8 @@ void setup()
   server.on("/cmd", HTTP_POST, handleCmd);
   server.on("/state", HTTP_GET, handleState);
   server.begin();
+  getEngineState();
+  delay(200);
 }
 
 void loop()

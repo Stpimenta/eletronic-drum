@@ -14,11 +14,11 @@ void pad_controller_init(pad_t **pads, int count)
     s_pads = pads;
     s_pad_count = count;
 
-    // for (int i = 0; i < s_pad_count; i++)
-    // {
-    //     if (s_pads[i])
-    //         pad_load(s_pads[i]);
-    // }
+    for (int i = 0; i < s_pad_count; i++)
+    {
+        if (s_pads[i])
+            pad_load(s_pads[i]);
+    }
 }
 
 bool pad_controller_handle_set(const char *cmd)
@@ -36,7 +36,6 @@ bool pad_controller_handle_set(const char *cmd)
 
     param[strcspn(param, "\r\n ")] = 0;
 
-    printf(cmd);
     printf("[PAD CTRL] id=%d param=%s value=%d\n", id, param, value);
     pad_t *pad = NULL;
 

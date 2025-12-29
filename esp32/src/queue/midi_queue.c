@@ -126,7 +126,7 @@ void start_queue_midi_task(int cpuCore)
                 "midi_task", // name
                 2048,        // stack
                 NULL,        // params
-                5,           // pririty
+                12,           // pririty
                 &midiTaskHandle, // handle
                 cpuCore            // CPU core (0 || 1)
             );
