@@ -14,6 +14,11 @@
         "esp_log.h": "c",
         "pad.h": "c",
         "stdlib.h": "c",
-        "queue.h": "c"
-    }
+        "queue.h": "c",
+        "task.h": "c",
+        "process_task.h": "c",
+        "adc_reader.h": "c",
+        "midi_event_t.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

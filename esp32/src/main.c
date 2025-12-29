@@ -5,10 +5,13 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "hardware/adc_reader/adc_reader.h"
+#include "queue/midi_queue.h"
+#include "process/process_timer.h"
 #include "engine/pad/pad.h"
-
-
-
+#include "process/process_uart.h"
+#include "controller_uart/pad_controller.h"
+#include"controller_uart/engine_controller.h"
+#include "storage/nvs_manager.h"
 
 void setup_adc()
 {
@@ -57,47 +60,38 @@ void setup_adc()
 
 
 
-#define QUEUE_SIZE 15
-QueueHandle_t midiQueue;
-void midi_task(void *arg)
-{
-    midi_event_t event;
-    while (1)
-    {
-        if (xQueueReceive(midiQueue, &event, portMAX_DELAY) == pdTRUE)
-        {
-            // Simula envio de MIDI
-            if (!event.noteOff)
-            {
-                printf("MIDI Note On: %d, velocity: %d\n", event.note, event.velocity);
-            }
-            else
-            {
-                printf("MIDI Note Off: %d\n", event.note);
-            }
-        }
-    }
-}
+#define NUM_PADS 1
+pad_t *pads[NUM_PADS];
+
+#define NUM_ENGINES = 1;
 
 void app_main(void)
 {
     setup_adc();
+    nvs_manager_init();
 
-    // Cria fila
-    midiQueue = xQueueCreate(QUEUE_SIZE, sizeof(midi_event_t));
+    // create queue for process midi events
+    QueueHandle_t midiQueue = create_midi_queue();
 
-    // Cria pad
-   pad_t *pad1 = create_pad(ADC1_TYPE, ADC1_CHANNEL_6, 100, 36, 4095, midiQueue);
+    // parts of drum
+    pad_t *pad1 = create_pad(ADC1_TYPE,1,"snare",ADC1_CHANNEL_6, 100, 38, 4095, midiQueue);
+    pads[0] = pad1;
 
-    pad1->eventQueue = midiQueue;
+    //timer and read tasks 
+    int numEngineParts = 1;
+    engine_t *engineParts = malloc(sizeof(engine_t) * numEngineParts);
+    engineParts[0].type = ENGINE_PAD;
+    engineParts[0].object = pad1;
+    engineParts[0].update = update_pad_wrapper;
 
-    // Cria task MIDI
-    xTaskCreate(midi_task, "midi_task", 2048, NULL, 5, NULL);
+    //controller uart - communication with esp01 web page
+    pad_controller_init(pads, NUM_PADS);
+    engine_controller_init(engineParts,numEngineParts);
 
-    while (1)
-    {
-        // Atualiza pad e envia eventos
-        update_pad(pad1);
-        vTaskDelay(pdMS_TO_TICKS(10)); // 10ms loop
-    }
+    // start tasks
+    start_process_timer(engineParts,numEngineParts);
+    start_queue_midi_task(0);
+    start_process_uart(UART_NUM_1,16,17);
+
+
 }
