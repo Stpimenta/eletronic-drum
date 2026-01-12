@@ -29,9 +29,10 @@ static void uart_task(void *arg)
             continue;
 
         buf[len] = 0;
-
-        // printf("\n[UART RX] len=%d\n", len);
-        // printf(">> RAW:\n%s\n", (char *)buf);
+        
+        //debug//
+        // printf("[PROCESS UART]\n[UART RX] len=%d\n", len);
+        // printf("[PROCESS UART]>> RAW:\n%s\n", (char *)buf);
 
         bool all_ok = true;
         bool suppress_ack = false;

@@ -100,8 +100,8 @@ static void midi_task(void *arg)
 
             if (!event.noteOff)
             {
-                printf("MIDI Note On: %d, velocity: %d\n", event.note, event.velocity);
-                // midi_send_note_on(event.note, event.velocity);
+                // printf("MIDI Note On: %d, velocity: %d\n", event.note, event.velocity);
+                midi_send_note_on(event.note, event.velocity);
             }
 
             else

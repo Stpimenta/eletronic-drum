@@ -73,7 +73,7 @@ void app_main(void)
     QueueHandle_t midiQueue = create_midi_queue();
 
     // parts of drum
-    pad_t *pad1 = create_pad(ADC1_TYPE,1,"snare",ADC1_CHANNEL_6, 100, 38, 4095, midiQueue);
+    pad_t *pad1 = create_pad(ADC1_TYPE,1,"snare",ADC1_CHANNEL_4, 38, 4095, midiQueue);
     pads[0] = pad1;
 
     //timer and read tasks 
@@ -89,8 +89,8 @@ void app_main(void)
 
     // start tasks
     start_process_timer(engineParts,numEngineParts);
-    start_queue_midi_task(0);
-    start_process_uart(UART_NUM_1,16,17);
+    start_queue_midi_task(1);
+    start_process_uart(UART_NUM_1,16,17,0);
 
 
 }

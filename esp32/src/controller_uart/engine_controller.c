@@ -39,15 +39,17 @@ bool engine_controller_get_all(char *out, size_t max_len)
             n = snprintf(
                 out + used,
                 max_len - used,
-                "PAD %d %s %d %d %d %d %d\n",
+                "PAD %d %s %d %d %d %d %lu %lu %.2f %.2f\n",
                 pad->id,
                 pad->name,
                 pad->threshold,
                 pad->note,
                 pad->sensitivity,
                 pad->peak_hold_time,
-                pad->duration_retrigger_scan_time);
-
+                pad->retrigger_min_us,
+                pad->retrigger_max_us,
+                pad->retrigger_curve,
+                pad->velocity_curve);
             if (n < 0 || used + n >= max_len)
                 return false;
 
@@ -56,12 +58,10 @@ bool engine_controller_get_all(char *out, size_t max_len)
     }
 
     n = snprintf(out + used, max_len - used, "END\n");
-
-
+    //debug//
+    // printf("FULL ENGINE STRING:\n%s", out);
     if (n < 0 || used + n >= max_len)
         return false;
 
-
-    printf("[ENGINE CONTROLLER]ENGINE RESPONSE:\n%s", out);
     return true;
 }

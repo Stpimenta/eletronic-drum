@@ -28,17 +28,18 @@ bool pad_controller_handle_set(const char *cmd)
 
     int id;
     char param[32];
-    int value;
+    char value_str[32];
 
-    int parsed = sscanf(cmd, "SET PAD %d %31s %d", &id, param, &value);
+    int parsed = sscanf(cmd, "SET PAD %d %31s %31s", &id, param, value_str);
     if (parsed != 3)
         return false;
 
     param[strcspn(param, "\r\n ")] = 0;
+    value_str[strcspn(value_str, "\r\n ")] = 0;
 
-    printf("[PAD CTRL] id=%d param=%s value=%d\n", id, param, value);
+    // printf("[PAD CTRL] RECEIVED -> PAD ID: %d, PARAM: %s, VALUE: %s\n", id, param, value_str);
+
     pad_t *pad = NULL;
-
     for (int i = 0; i < s_pad_count; i++)
     {
         if (s_pads[i]->id == id)
@@ -56,45 +57,83 @@ bool pad_controller_handle_set(const char *cmd)
 
     bool changed = false;
 
+    /* ---------- INT PARAMS ---------- */
+
+    int ivalue = atoi(value_str);
+
     if (strcmp(param, "THRESHOLD") == 0)
     {
-        if (pad->threshold != value)
+        if (pad->threshold != ivalue)
         {
-            pad->threshold = value;
+            pad->threshold = ivalue;
             changed = true;
         }
     }
     else if (strcmp(param, "NOTE") == 0)
     {
-        if (pad->note != value)
+        if (pad->note != ivalue)
         {
-            pad->note = value;
+            pad->note = ivalue;
             changed = true;
         }
     }
     else if (strcmp(param, "SENSITIVITY") == 0)
     {
-        if (pad->sensitivity != value)
+        if (pad->sensitivity != ivalue)
         {
-            pad->sensitivity = value;
+            pad->sensitivity = ivalue;
             changed = true;
         }
     }
     else if (strcmp(param, "PEAK_HOLD") == 0)
     {
-        if (pad->peak_hold_time != value)
+        if (pad->peak_hold_time != ivalue)
         {
-            pad->peak_hold_time = value;
+            pad->peak_hold_time = ivalue;
             changed = true;
         }
     }
-    else if (strcmp(param, "RETRIGGER") == 0)
+    else if (strcmp(param, "RETRIGGER_MIN") == 0)
     {
-        if (pad->duration_retrigger_scan_time != value)
+        if (pad->retrigger_min_us != ivalue)
         {
-            pad->duration_retrigger_scan_time = value;
+            pad->retrigger_min_us = ivalue;
             changed = true;
         }
+    }
+    else if (strcmp(param, "RETRIGGER_MAX") == 0)
+    {
+        if (pad->retrigger_max_us != ivalue)
+        {
+            pad->retrigger_max_us = ivalue;
+            changed = true;
+        }
+    }
+
+    /* ---------- FLOAT PARAMS ---------- */
+
+    else if (strcmp(param, "VELOCITY_CURVE") == 0)
+    {
+        float fvalue = strtof(value_str, NULL);
+        if (pad->velocity_curve != fvalue)
+        {
+            pad->velocity_curve = fvalue;
+            changed = true;
+        }
+    }
+    else if (strcmp(param, "RETRIGGER_CURVE") == 0)
+    {
+        float fvalue = strtof(value_str, NULL);
+        if (pad->retrigger_curve != fvalue)
+        {
+            pad->retrigger_curve = fvalue;
+            changed = true;
+        }
+    }
+    else
+    {
+        printf("[PAD CTRL] UNKNOWN PARAM %s\n", param);
+        return false;
     }
 
     if (changed)

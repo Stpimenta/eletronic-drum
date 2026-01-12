@@ -24,7 +24,13 @@ typedef struct
     int maxValue;           
     int sensitivity;        
     int peak_hold_time;     
-    int duration_retrigger_scan_time; 
+    // int duration_retrigger_scan_time; 
+    uint32_t retrigger_min_us;      
+    uint32_t retrigger_max_us;     
+    uint32_t retrigger_current_us;
+    float    retrigger_curve;
+    float velocity_curve;
+    // float retrigger_aggressiveness;
 
     // =====================================================
     // RUNTIME
@@ -44,7 +50,6 @@ pad_t *create_pad(adc_type_t type,
                   int id,
                   const char *name, 
                   int pin,
-                  int threshold,
                   int note,
                   int maxValue,
                   QueueHandle_t queue);
